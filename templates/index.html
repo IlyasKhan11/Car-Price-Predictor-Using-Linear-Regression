@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../static/css/style.css">
+    <title>Car Price Predictor</title>
+</head>
+
+<body>
+    <main class="main">
+        <section class="inputContainer">
+            <h1>Welcome to Car Price Predictor! 🚗</h1>
+            <p class="text">The following model predicts the price of cars through the given data, using a Linear Regression model. 💻</p>
+
+            <form class="formContainer" id="predictionForm" method="post" action="/predict" accept-charset="UTF-8">
+                <!-- Company -->
+                <div class="form">
+                    <label for="company"><b>Select Company</b></label>
+                    <select class="companyselect" id="company" name="company" required onchange="load_models(this, 'car_model')">
+                        {% for company in companies %}
+                        <option value="{{ company }}">{{ company }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Car Model -->
+                <div class="form">
+                    <label for="car_model"><b>Select Model</b></label>
+                    <select class="companyselect" id="car_model" name="model" required>
+                        {% for model in car_models %}
+                        <option value="{{ model }}">{{ model }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Year of Purchase -->
+                <div class="form">
+                    <label for="year"><b>Select Year of Purchase</b></label>
+                    <select class="companyselect" id="year" name="year" required>
+                        {% for year in years %}
+                        <option value="{{ year }}">{{ year }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Fuel Type -->
+                <div class="form">
+                    <label for="fuel"><b>Select Fuel Type</b></label>
+                    <select class="companyselect" id="fuel" name="fuel" required>
+                        {% for fuel in fuel_types %}
+                        <option value="{{ fuel }}">{{ fuel }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Kilometers Driven -->
+                <div class="form">
+                    <label for="kilo_driven"><b>Enter Number of Kilometers Travelled</b></label>
+                    <input type="text" id="kilo_driven" name="kilo_driven" class="input" placeholder="Enter no of kilometers travelled" required>
+                </div>
+
+                <!-- Predict Button -->
+                <button type="submit" onclick="send_data()">Predict</button>
+                <h2 id="prediction" style="margin-top: 20px;"></h2>
+            </form>
+
+            <!-- Prediction Result -->
+        </section>
+    </main>
+
+    <script>
+        function load_models(companySelect, car_model_id) {
+            var company = document.getElementById(companySelect.id);
+            var car_model = document.getElementById(car_model_id);
+            car_model.value = "";
+            car_model.innerHTML = "";
+            {% for company in companies %}
+            if (company.value == "{{ company }}") {
+                {% for model in car_models %}
+                {% if company in model %}
+                var newOption = document.createElement("option");
+                newOption.value = "{{ model }}";
+                newOption.innerHTML = "{{ model }}";
+                car_model.options.add(newOption);
+                {% endif %}
+                {% endfor %}
+            }
+            {% endfor %}
+        }
+
+        async function send_data() {
+            event.preventDefault();
+
+            document.getElementById('prediction').innerHTML = "Waiting...";
+
+            var fd = new FormData(document.querySelector('form'));
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    body: fd
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok ' + response.statusText);
+                }
+
+                const data = await response.json();
+
+                document.getElementById('prediction').innerHTML = "Prediction: $" + data.price;
+
+            } catch (error) {
+                console.error('There was a problem with the fetch operation:', error);
+                document.getElementById('prediction').innerHTML = "Error fetching prediction.";
+            }
+        }
+    </script>
+</body>
+
+</html>
